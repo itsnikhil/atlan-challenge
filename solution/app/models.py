@@ -6,7 +6,7 @@ User = get_user_model()
 
 class DataStore(models.Model):
     owner       = models.ForeignKey(User, on_delete=models.CASCADE)
-    csv         = models.FileField('documents')
+    csv         = models.FileField(upload_to='documents')
     uploaded_at = models.DateTimeField(auto_now=True)
 
     class Meta:

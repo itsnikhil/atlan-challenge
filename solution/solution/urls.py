@@ -23,12 +23,18 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
+    path('api-auth/', include('rest_framework.urls')),
     path('upload/<str:filename>', views.FileUploadView.as_view()),
     path('upload/start/<int:file_id>', views.StartUploadTask.as_view()),
     path('upload/status/<int:file_id>', views.UploadTaskState.as_view()),
     path('upload/pause/<int:file_id>', views.PauseUploadTask.as_view()),
     path('upload/resume/<int:file_id>', views.ResumeUploadTask.as_view()),
-    path('upload/stop/<int:file_id>', views.StopUploadTask.as_view())
+    path('upload/stop/<int:file_id>', views.StopUploadTask.as_view()),
+    path('download/start/', views.StartDownloadTask.as_view()),
+    path('download/status/', views.DownloadTaskState.as_view()),
+    path('download/pause/', views.PauseDownloadTask.as_view()),
+    path('download/resume/', views.ResumeDownloadTask.as_view()),
+    path('download/stop/', views.StopDownloadTask.as_view()),
 ]
 
 if settings.DEBUG:

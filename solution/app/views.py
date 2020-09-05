@@ -1,20 +1,26 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import FileUploadParser
 
 from app.models import DataStore
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from django.conf import settings
 
 from threading import Thread
-from app.worker import Task
+from app.upload_worker import UploadTask
+from app.download_worker import DownloadTask
 
-global task
+import os
+
+global upload_task
+global download_task
 
 STATE_RESPONSES = {
-    0: 'Ready to Start!',
-    1: 'Uploading...',
+    0: 'Uploading...',
+    1: 'Ready to Start!',
     2: 'Paused!',
     3: 'Stopped!'
 }
@@ -43,13 +49,13 @@ class StartUploadTask(APIView):
     def post(self, request, file_id):
         f = get_object_or_404(DataStore, id=file_id, owner=request.user)
         
-        global task
-        task = Task(request.user, f.id)
+        global upload_task
+        upload_task = UploadTask(request.user, f.id)
 
-        thread = Thread(task.csv_to_db())
+        thread = Thread(upload_task.csv_to_db())
         thread.start()
 
-        return Response({'message': STATE_RESPONSES[task.get_state()]}, status=200)
+        return Response({'message': STATE_RESPONSES[upload_task.get_state()]}, status=200)
 
 
 class UploadTaskState(APIView):
@@ -58,9 +64,13 @@ class UploadTaskState(APIView):
     def post(self, request, file_id):
         get_object_or_404(DataStore, id=file_id, owner=request.user)
         
-        global task
+        global upload_task
 
-        return Response({'message': STATE_RESPONSES[task.get_state()]}, status=200)
+        return Response(
+            {
+                'message': STATE_RESPONSES[upload_task.get_state()],
+                'progress': upload_task.get_progress()
+            }, status=200)
 
 
 class PauseUploadTask(APIView):
@@ -69,10 +79,10 @@ class PauseUploadTask(APIView):
     def post(self, request, file_id):
         get_object_or_404(DataStore, id=file_id, owner=request.user)
         
-        global task
-        task.set_state('PAUSED')
+        global upload_task
+        upload_task.pause()
 
-        return Response({'message': STATE_RESPONSES[task.get_state()]}, status=200)
+        return Response({'message': STATE_RESPONSES[upload_task.get_state()]}, status=200)
 
 
 class ResumeUploadTask(APIView):
@@ -81,10 +91,10 @@ class ResumeUploadTask(APIView):
     def post(self, request, file_id):
         get_object_or_404(DataStore, id=file_id, owner=request.user)
         
-        global task
-        task.resume()
+        global upload_task
+        upload_task.resume()
         
-        return Response({'message': STATE_RESPONSES[task.get_state()]}, status=200)
+        return Response({'message': STATE_RESPONSES[upload_task.get_state()]}, status=200)
 
 
 class StopUploadTask(APIView):
@@ -93,7 +103,76 @@ class StopUploadTask(APIView):
     def post(self, request, file_id):
         get_object_or_404(DataStore, id=file_id, owner=request.user)
         
-        global task
-        task.stop()
+        global upload_task
+        upload_task.stop()
         
-        return Response({'message': STATE_RESPONSES[task.get_state()]}, status=200)
+        return Response({'message': STATE_RESPONSES[upload_task.get_state()]}, status=200)
+
+
+class StartDownloadTask(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        file_id = request.GET.get("id")
+        from_year = request.GET.get("from_year")
+
+        global download_task
+        download_task = DownloadTask(request.user, file_id, from_year)
+        
+        thread = Thread(download_task.db_to_csv())
+        thread.start()
+
+        data = open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{request.user.username}_export_game_sale.csv','r').read()
+        
+        # force download.
+        response = HttpResponse(data, content_type='text/csv')
+        response['Content-Disposition'] = f'attachment;filename=export.csv'
+        return response
+
+
+class DownloadTaskState(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        global download_task
+
+        return Response(
+            {
+                'message': STATE_RESPONSES[download_task.get_state()],
+                'progress': download_task.get_progress()
+            }, status=200)
+
+
+class PauseDownloadTask(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        global download_task
+        download_task.pause()
+
+        return Response({'message': STATE_RESPONSES[download_task.get_state()]}, status=200)
+
+
+class ResumeDownloadTask(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        global download_task
+        download_task.resume()
+        
+        return Response({'message': STATE_RESPONSES[download_task.get_state()]}, status=200)
+
+
+class StopDownloadTask(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        data = open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{request.user.username}_export_game_sales.csv','r').read()
+        
+        global download_task
+        download_task.stop()
+
+        # force download.
+        response = HttpResponse(data, content_type='text/csv')
+        response['Content-Disposition'] = f'attachment;filename=export.csv'
+        return response
