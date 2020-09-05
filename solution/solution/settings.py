@@ -43,8 +43,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     # My apps
-    'app_upload',
-    'app_download'
+    'app',
 ]
 
 MIDDLEWARE = [
@@ -80,8 +79,14 @@ WSGI_APPLICATION = 'solution.wsgi.application'
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+     'DEFAULT_AUTHENTICATION_CLASSES': [
+               'rest_framework.authentication.TokenAuthentication',
+     ],
+    'DEFAULT_PERMISSION_CLASSES':[
+                'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
     ]
 }
 
@@ -133,3 +138,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
