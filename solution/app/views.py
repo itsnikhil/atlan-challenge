@@ -166,7 +166,7 @@ class PauseDownloadTask(APIView):
 class ResumeDownloadTask(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def post(self, request):
+    def get(self, request):
         global download_task
         download_task.resume()
         
