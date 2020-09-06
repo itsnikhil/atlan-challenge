@@ -13,9 +13,11 @@
 
 ### Demo
 Upload Task
+
 ![Upload Task GIF](demo/upload_task.gif)
 
 Download Task
+
 ![Download Task GIF](demo/download_task.gif)
 
 ### Salient Features
@@ -29,7 +31,7 @@ Download Task
 * First clone the project, open your terminal and enter the command
 
 ```bash
-git clone https://github.com/itsnikhil/atlan-challege.git
+git clone https://github.com/itsnikhil/atlan-challenge.git
 ```
 * Now enter into the project folder
 ```bash
@@ -92,7 +94,7 @@ Endpoints:
 + download/stop/
 + ^media\/(?P<path>.*)$
 
-Some endpoints might be restricted and connot be accessed directly. See in detail at postman - [API Documentation](https://documenter.getpostman.com/view/12623083/TVCiSRip) - 
+[API Documentation](https://documenter.getpostman.com/view/12623083/TVCiSRip) - Some endpoints might be restricted and connot be accessed directly. See in detail at postman 
 
 ### Credits
 This software uses the following open source packages:

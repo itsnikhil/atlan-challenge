@@ -23,7 +23,6 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
-    path('api-auth/', include('rest_framework.urls')),
     path('upload/<str:filename>', views.FileUploadView.as_view()),
     path('upload/start/<int:file_id>', views.StartUploadTask.as_view()),
     path('upload/status/<int:file_id>', views.UploadTaskState.as_view()),
