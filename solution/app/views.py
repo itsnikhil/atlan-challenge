@@ -116,18 +116,28 @@ class StartDownloadTask(APIView):
         file_id = request.GET.get("id")
         from_year = request.GET.get("from_year")
 
+        file_id = toInt(file_id)
+        from_year = toInt(from_year)
+
         global download_task
         download_task = DownloadTask(request.user, file_id, from_year)
         
         thread = Thread(download_task.db_to_csv())
         thread.start()
 
-        data = open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{request.user.username}_export_game_sale.csv','r').read()
+        if download_task.get_progress() == 100:
+            try:
+                data = open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{request.user.username}_export_game_sale.csv','r').read()
+            except FileNotFoundError:
+                return Response({'error': 'Something went wrong!'}, status=500)        
+            
+            # force download.
+            response = HttpResponse(data, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment;filename=export.csv'
+            return response
         
-        # force download.
-        response = HttpResponse(data, content_type='text/csv')
-        response['Content-Disposition'] = f'attachment;filename=export.csv'
-        return response
+        else:
+            return Response({'message': STATE_RESPONSES[download_task.get_state()]}, status=200)
 
 
 class DownloadTaskState(APIView):
@@ -160,14 +170,29 @@ class ResumeDownloadTask(APIView):
         global download_task
         download_task.resume()
         
-        return Response({'message': STATE_RESPONSES[download_task.get_state()]}, status=200)
+        if download_task.get_progress() == 100:
+            try:
+                data = open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{request.user.username}_export_game_sale.csv','r').read()
+            except FileNotFoundError:
+                return Response({'error': 'Something went wrong!'}, status=500)
+            
+            # force download.
+            response = HttpResponse(data, content_type='text/csv')
+            response['Content-Disposition'] = f'attachment;filename=export.csv'
+            return response
+        
+        else:
+            return Response({'message': STATE_RESPONSES[download_task.get_state()]}, status=200)
 
 
 class StopDownloadTask(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        data = open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{request.user.username}_export_game_sales.csv','r').read()
+        try:
+            data = open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{request.user.username}_export_game_sale.csv','r').read()
+        except FileNotFoundError:
+            return Response({'error': 'Something went wrong!'}, status=500)
         
         global download_task
         download_task.stop()
@@ -176,3 +201,11 @@ class StopDownloadTask(APIView):
         response = HttpResponse(data, content_type='text/csv')
         response['Content-Disposition'] = f'attachment;filename=export.csv'
         return response
+
+
+def toInt(value):
+    try:
+        value = int(value)
+        return value
+    except (ValueError, TypeError):
+        return None

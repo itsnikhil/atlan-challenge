@@ -39,6 +39,13 @@ class DownloadTask:
         else:
             DataStore.objects.get(owner=self.user)
             queryset = GameSale.objects.all()
+
+        if len(queryset) == 0:
+            return
+        
+        opts = queryset.model._meta
+        model = queryset.model
+        field_names = [field.name for field in opts.fields if field.name != "metadata" and field.name != "id"]
         
         if self.processed_rows == 0:
             with open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{self.user.username}_export_game_sale.csv', 'w', newline='') as csv_file:
@@ -46,37 +53,31 @@ class DownloadTask:
                 writer = csv.writer(csv_file)
             
                 # Write a first row with header information
-                opts = queryset.model._meta
-                model = queryset.model
-                field_names = [field.name for field in opts.fields if field.name != "metadata" and field.name != "id"]
                 writer.writerow(field_names)
 
-        if len(queryset) == 0:
-            return
         
         with open(f'{settings.BASE_DIR}{settings.MEDIA_URL}{self.user.username}_export_game_sale.csv', 'a', newline='') as csv_file:
             writer = csv.writer(csv_file)
-            
-            for obj in queryset:
+            for obj in queryset[self.processed_rows:]:
                 try:
                     if self.get_state():
                         raise Exception('Throw an interrupt!')
                     
                     # Write data rows
                     writer.writerow([getattr(obj, field) for field in field_names])
-                    
+                    print(obj.rank,' --- ' , obj)
                     self.processed_rows += 1
                     self.progress = round(self.processed_rows / len(queryset) * 100, 2)
                 
-                except Exception:
-                    break
+                except Exception as e:
+                    # print(e)
+                    csv_file.close()
+                    return
                 time.sleep(1)
 
-        self.set_state('READY')
-
+            self.set_state('READY')
 
     def pause(self):
-        print(self.get_state())
         if self.get_state() == STATES['DOWNLOADING']:
             self.set_state('PAUSED')
 
@@ -91,9 +92,9 @@ class DownloadTask:
             self.processed_rows = 0
 
         try:
-            os.remove(f'{settings.BASE_DIR}{settings.MEDIA_URL}{self.user.username}_export_game_sales.csv')
-        except FileNotFoundError:
-            pass
+            os.remove(f'{settings.BASE_DIR}{settings.MEDIA_URL}{self.user.username}_export_game_sale.csv')
+        except FileNotFoundError as e:
+            print(e)
         
     
     def get_progress(self):

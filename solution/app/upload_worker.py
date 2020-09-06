@@ -53,7 +53,7 @@ class UploadTask:
                 
                 self.progress = round((self.bytes_read / f.csv.size) * 100, 2)
             except Exception as e:
-                print(e)
+                # print(e)
                 break
             
             time.sleep(1)
