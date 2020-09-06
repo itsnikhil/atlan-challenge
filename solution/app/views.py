@@ -110,7 +110,7 @@ class StopUploadTask(APIView):
 
 
 class StartDownloadTask(APIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         file_id = request.GET.get("id")
