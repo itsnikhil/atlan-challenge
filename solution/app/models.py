@@ -5,6 +5,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 User = get_user_model()
 
 class DataStore(models.Model):
+    """
+        Entity for storing file uploaded and owner 
+    """
     owner       = models.ForeignKey(User, on_delete=models.CASCADE)
     csv         = models.FileField(upload_to='documents')
     uploaded_at = models.DateTimeField(auto_now=True)
@@ -16,6 +19,9 @@ class DataStore(models.Model):
         return self.csv.name
 
 class GameSale(models.Model):
+    """
+        Entity for csv record
+    """
     metadata     = models.ForeignKey(DataStore, on_delete=models.CASCADE)
     rank         = models.PositiveIntegerField()
     name         = models.CharField(max_length=255)

@@ -70,8 +70,10 @@ docker-compose exec web python ./solution/manage.py migrate
 docker-compose exec web python ./solution/manage.py createsuperuser
 ```
 
-* Now in terminal run the server and go to http://localhost:8000/ you'll see list of all endpoints
+* Now go to http://localhost:8000/ you'll see list of all endpoints
 * You can login to admin with that user you've just created by going to http://localhost:8000/admin
+
+For testing purposes [use this csv file](solution/media/documents/vgsales.csv)
 
 ### API Doc
 Endpoints:
@@ -105,4 +107,5 @@ MIT
 
 ### Author
 [Nikhil Taneja](https://itsnikhil.pythonanywhere.com)
+
 [Contact](mailto:taneja.nikhil03@gmail.com)

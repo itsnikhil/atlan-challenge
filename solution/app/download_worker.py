@@ -5,7 +5,7 @@ from django.conf import settings
 import os
 from django.contrib.admin.utils import label_for_field
 
-
+# Possible states
 STATES = {
     'DOWNLOADING': 0,
     'READY': 1,
@@ -15,6 +15,9 @@ STATES = {
 
 
 class DownloadTask:
+    """
+        State Machine class which is responsible for handling download task states
+    """
     def __init__(self, user, file_id, from_year):
         self.__state = STATES['READY']
         self.user = user
@@ -24,22 +27,27 @@ class DownloadTask:
         self.progress = 0
 
     def db_to_csv(self):
+        """
+            Method to convert database records to csv file record by record
+        """
         self.set_state('DOWNLOADING')
+        # No query param
         if (self.file_id != None and self.from_year != None):
             f = DataStore.objects.get(id=self.file_id)
             queryset = GameSale.objects.filter(metadata=f, metadata__owner=self.user, year__gt=self.from_year)
-
+        # Only file_id in param
         elif (self.file_id != None and self.from_year == None):
             f = DataStore.objects.get(id=self.file_id, owner=self.user)
             queryset = GameSale.objects.filter(metadata=f)
-        
+        # Only start_year in param
         elif (self.file_id == None and self.from_year != None):
             queryset = GameSale.objects.filter(year__gt=self.from_year, metadata__owner=self.user)
-        
+        # Only file_id and start_year in param
         else:
             DataStore.objects.get(owner=self.user)
             queryset = GameSale.objects.all()
 
+        # No record found
         if len(queryset) == 0:
             return
         
@@ -78,30 +86,49 @@ class DownloadTask:
             self.set_state('READY')
 
     def pause(self):
+        """
+            Transition to pause state from downloading state
+        """
         if self.get_state() == STATES['DOWNLOADING']:
             self.set_state('PAUSED')
 
     def resume(self):
+        """
+            Transition to downloading state from paused state
+        """
         if self.get_state() == STATES['PAUSED']:
             self.set_state('DOWNLOADING')
             self.db_to_csv()
     
     def stop(self):
+        """
+            Rollback and transition to stop state if process is not completed so far.
+        """
         if self.get_state() != STATES['READY']:
             self.set_state('TERMINATED')
             self.processed_rows = 0
 
         try:
+            # Rollback
             os.remove(f'{settings.BASE_DIR}{settings.MEDIA_URL}{self.user.username}_export_game_sale.csv')
         except FileNotFoundError as e:
             print(e)
         
     
     def get_progress(self):
+        """
+            Progress getter 
+        """
         return self.progress
     
     def get_state(self):
+        """
+            State getter 
+        """
         return self.__state
     
     def set_state(self, state):
+        """
+            State setter 
+        """
         self.__state = STATES.get(state, 0)

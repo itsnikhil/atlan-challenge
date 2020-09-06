@@ -5,6 +5,7 @@ from rest_framework.parsers import FileUploadParser
 
 from app.models import DataStore
 from django.db import IntegrityError
+
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.conf import settings
@@ -19,7 +20,7 @@ global upload_task
 global download_task
 
 STATE_RESPONSES = {
-    0: 'Uploading...',
+    0: 'Uploading/Downloading...',
     1: 'Ready to Start!',
     2: 'Paused!',
     3: 'Stopped!'
@@ -27,6 +28,9 @@ STATE_RESPONSES = {
 
 
 class FileUploadView(APIView):
+    """
+        Accept file input
+    """
     permission_classes = (IsAuthenticated,)
     parser_classes = (FileUploadParser,)
 
@@ -44,6 +48,9 @@ class FileUploadView(APIView):
 
 
 class StartUploadTask(APIView):
+    """
+        Endpoint to Start long running translation process of inserting csv row into database
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, file_id):
@@ -59,6 +66,9 @@ class StartUploadTask(APIView):
 
 
 class UploadTaskState(APIView):
+    """
+        Check the state of long running process long with progress (0-100%)
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, file_id):
@@ -74,6 +84,9 @@ class UploadTaskState(APIView):
 
 
 class PauseUploadTask(APIView):
+    """
+        Pauses the execution of csv to database long running process
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, file_id):
@@ -86,6 +99,9 @@ class PauseUploadTask(APIView):
 
 
 class ResumeUploadTask(APIView):
+    """
+        Resume the execution of csv to database long running process from it's last state
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, file_id):
@@ -98,6 +114,9 @@ class ResumeUploadTask(APIView):
 
 
 class StopUploadTask(APIView):
+    """
+        Terminate the execution of csv to database long running process. Note: All insertions which were not commited will be rolled back
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, file_id):
@@ -110,6 +129,9 @@ class StopUploadTask(APIView):
 
 
 class StartDownloadTask(APIView):
+    """
+        Endpoint to Start long running translation process of converting database record to csv file. Query parameters are optional! Note: export.csv file will be downloaded containing data only if all the records were processed
+    """
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
@@ -141,6 +163,9 @@ class StartDownloadTask(APIView):
 
 
 class DownloadTaskState(APIView):
+    """
+        Check the state of long running process long with progress (0-100%)
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
@@ -154,6 +179,9 @@ class DownloadTaskState(APIView):
 
 
 class PauseDownloadTask(APIView):
+    """
+    Pauses the execution of database to csv long running process
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
@@ -164,6 +192,9 @@ class PauseDownloadTask(APIView):
 
 
 class ResumeDownloadTask(APIView):
+    """
+        Resume the execution of database to csv long running process from it's last state. Note: export.csv file will be downloaded containing data only if all the records were processed.
+    """
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
@@ -186,6 +217,9 @@ class ResumeDownloadTask(APIView):
 
 
 class StopDownloadTask(APIView):
+    """
+        Terminate the execution of database to csv long running process. Note: export.csv file will be downloaded containing records that were processed.
+    """
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
@@ -204,6 +238,9 @@ class StopDownloadTask(APIView):
 
 
 def toInt(value):
+    """
+        Helper method to convert type to int
+    """
     try:
         value = int(value)
         return value
