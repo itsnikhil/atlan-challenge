@@ -37,10 +37,6 @@ git clone https://github.com/itsnikhil/atlan-challenge.git
 ```bash
 cd atlan-challenge/
 ```
-* Build the services defined in the docker-compose.yml
-```bash
-docker-compose up -d --build
-```
 * Create .env file inside solution folder. Copy content from sample.env and add YOUR_SECRET_KEY
 
 (Linux/ MacOS)
